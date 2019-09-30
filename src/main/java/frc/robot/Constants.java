@@ -77,7 +77,8 @@ public class Constants{
 	
     static final double kToleranceDegrees = 2.0f;	
  	
- 	public static final double kToleranceDistance = 0.5;
+	public static final double kToleranceDistance = 0.5;
+	public static final double kTolerancePixels = 10;
  	
  	public static final boolean kLeftSensorPhase = false;
 	public static final boolean kRightSensorPhase = false;
@@ -109,6 +110,8 @@ public class Constants{
 	 */
 	public static final int kTimeoutMs = 10;
 	
+	public static final int CAMERA_CENTER = 0;
+
 	public static final int DRIVE_LEFT = 0;
 	public static final int DRIVE_RIGHT = 1;
 	public static final int DRIVE_ENC_PPR  = 512;	// Talon counts 4 edges * 128 PPR

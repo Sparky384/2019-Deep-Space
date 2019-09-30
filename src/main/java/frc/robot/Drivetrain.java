@@ -477,4 +477,81 @@ public class Drivetrain {
 			return 1;
 		}
 	}
+
+	/*
+	 *  Turns the controller by specified angle.
+	 *  Positive angles are clockwise
+	 *  Input angle and output ranges are defined in the Drivetrain constructor
+	 *  Also requires a timeout value, which is time before we give up PID control and
+	 *  move to whatever next step 
+	 *  
+	 *  Returns:
+	 *  0 if not enabled
+	 *  1 if enabled and turning
+	 *  -1 if error
+	 */
+	int cameraTurnTo(double centroid, double timeout)	{
+		// This is executed in first call to method
+		if (!Robot.isTurning) {
+		   imuZeroYaw();	// I'm gonna zero the angle here
+		   turnController.setSetpoint(Constants.CAMERA_CENTER);
+		   rotateToAngleRate = 0; 	// This value will be updated in the pidWrite() method.
+		   leftStickValue = rightStickValue = 0.0;
+		   failTimer.start();		// the PID will fail if this timer exceeded
+		   Robot.isTurning = true;
+	   }
+	   
+	   // This is the final output of the PID
+	   rotateToAngleRate = turnController.getOutput(centroid, Constants.CAMERA_CENTER);
+	   
+	   if (centroid >= 0.0) {
+		   leftStickValue = -rotateToAngleRate;
+		   rightStickValue = rotateToAngleRate;
+	   } else if (centroid < 0.0)	{
+		   leftStickValue = -rotateToAngleRate;
+		   rightStickValue = rotateToAngleRate;
+	   }
+	   
+	   leftDrivetrain.set(leftStickValue);
+	   rightDrivetrain.set(rightStickValue);
+	   
+	   // Determine if the PID is finished
+	   if (Math.abs(Math.abs(centroid) - Math.abs(Constants.CAMERA_CENTER) < Constants.kTolerancePixels ) {
+		   if (!timing) {
+			   intervalTimer.start();
+			   timing = true;
+		   }		
+	   } else {
+		   intervalTimer.reset();
+		   timing = false;
+	   }
+	   
+	   // Check to see if PID has succeeded, or timed out and failed
+	   if (intervalTimer.hasPeriodPassed(0.5))	{
+		   frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
+		   frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
+		   rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
+		   rearRightMotor.set(ControlMode.PercentOutput, 0.0);
+		   Robot.isTurning = false;
+		   intervalTimer.reset();
+		   failTimer.reset();
+		   turnController.reset();
+		   Robot.targetTurn = false;
+		   return 0;
+	   } else if (failTimer.hasPeriodPassed(timeout)) {	// the PID has failed!
+		   frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
+		   frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
+		   rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
+		   rearRightMotor.set(ControlMode.PercentOutput, 0.0);
+		   Robot.isTurning = false;
+		   intervalTimer.reset();
+		   failTimer.reset();
+		   turnController.reset();
+		   Robot.targetTurn = false;
+		   return -1;
+	   }
+	   else	{		// the PID is not complete
+		   return 1;
+	   }
+   }
 }

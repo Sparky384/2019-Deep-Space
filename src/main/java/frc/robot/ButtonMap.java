@@ -11,6 +11,7 @@ public class ButtonMap {
 	static int outake = 8;
 	static int camera = 9;
 	static int boost = 3;
+	static int chaseBall = 11;	// this will become line up later, but for now it chase balls
 	
 	static int stick2 = 1; // trigger = manual drive wrist
 	//static int wristHigh = 7;
