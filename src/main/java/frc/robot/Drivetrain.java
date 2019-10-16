@@ -1,5 +1,7 @@
 package frc.robot;
 
+import javax.lang.model.util.ElementScanner6;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -12,27 +14,35 @@ import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
+// Spark Max libraries
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 public class Drivetrain {
 
-	public WPI_TalonSRX frontRightMotor = new WPI_TalonSRX(TalonPort.frontRightMotor);
-	public WPI_TalonSRX rearRightMotor = new WPI_TalonSRX(TalonPort.rearRightMotor);
-	public WPI_TalonSRX frontLeftMotor = new WPI_TalonSRX(TalonPort.frontLeftMotor);		// -1.0 to run forward
-	public WPI_TalonSRX rearLeftMotor = new WPI_TalonSRX(TalonPort.rearLeftMotor);		// -1.0 to run forward
-	private CANSparkMax leftBoostMotor;
-	private CANSparkMax rightBoostMotor;
+	public WPI_TalonSRX frontRightMotor = new WPI_TalonSRX(TalonPort.rightEncoder);	// needed for encoder
+	//public WPI_TalonSRX rearRightMotor = new WPI_TalonSRX(TalonPort.rearRightMotor);
+	public WPI_TalonSRX frontLeftMotor = new WPI_TalonSRX(TalonPort.leftEncoder);		// -1.0 to run forward, needed for encoder
+	//public WPI_TalonSRX rearLeftMotor = new WPI_TalonSRX(TalonPort.rearLeftMotor);		// -1.0 to run forward
+	
+	private CANSparkMax frontRightSpark = new CANSparkMax(TalonPort.frontRightMotor, MotorType.kBrushless);
+	private CANSparkMax centerRightSpark = new CANSparkMax(TalonPort.centerRightMotor, MotorType.kBrushless);
+	private CANSparkMax rearRightSpark = new CANSparkMax(TalonPort.rearRightMotor, MotorType.kBrushless);
+	private CANSparkMax frontLeftSpark = new CANSparkMax(TalonPort.frontLeftMotor, MotorType.kBrushless);
+	private CANSparkMax centerLeftSpark = new CANSparkMax(TalonPort.centerLeftMotor, MotorType.kBrushless);
+	private CANSparkMax rearLeftSpark = new CANSparkMax(TalonPort.rearLeftMotor, MotorType.kBrushless);
 
 	// Need to check elapsed time for PID control
 	private Timer intervalTimer = new Timer();	// PID interval timer
 	private Timer failTimer = new Timer();	// PID fails if value exceeded 
+	private Timer turnTimer = new Timer(); //Used in the turnToAngle
 	private boolean timing;
 	// Define the motors that are slaved as a control group
-	private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftMotor, rearLeftMotor);
-	private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightMotor, rearRightMotor);
+	//private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftMotor, rearLeftMotor);
+	//private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightMotor, rearRightMotor);
+	private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftSpark, centerLeftSpark, rearLeftSpark);
+	private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightSpark, centerRightSpark, rearRightSpark);
 	
 	// Set up differential drive for teleop
 	private DifferentialDrive diffDrive = new DifferentialDrive(leftDrivetrain, rightDrivetrain);
@@ -40,52 +50,18 @@ public class Drivetrain {
 	private AHRS imu;						// the NavX board
 	private MiniPID turnController;			// drivebase turning pid controller
 	private MiniPID driveController;		// drive distance pid controller
-	private MiniPID turnYawController;		// provides steering correction for driveTo() method
+	private MiniPID driveTurnController;		// drive distance pid controller
+	//private MiniPID turnYawController;		// provides steering correction for driveTo() method
 	double rotateToAngleRate;				// PID output for turn PID			
 	double driveToDistanceRate;
 	double leftStickValue;			
 	double rightStickValue;
  	int leftDistanceError;					// drive distance error
  	int rightDistanceError;
-	double currentDistanceError;
-	 
-	//private PowerDistributionPanel pdp;
+ 	double currentDistanceError;
 	
 	public Drivetrain()	{
-		// Left boost motor
-		leftBoostMotor = new CANSparkMax(TalonPort.leftBoost, MotorType.kBrushless);
-		leftBoostMotor.restoreFactoryDefaults();
-		leftBoostMotor.setIdleMode(IdleMode.kCoast);
-		leftBoostMotor.setInverted(true);
-		// Set current limiting for Spark Max
-		leftBoostMotor.setSmartCurrentLimit(Constants.kSparkCurrentLimit);
-		leftBoostMotor.setSecondaryCurrentLimit(Constants.kSparkPeakCurrentLimit, Constants.kSparkPeakCurrentDuration);
-		
-		// Right boost motor
-		rightBoostMotor = new CANSparkMax(TalonPort.rightBoost, MotorType.kBrushless);
-		rightBoostMotor.restoreFactoryDefaults();
-		rightBoostMotor.setIdleMode(IdleMode.kCoast);
-		// Set current limiting for Spark Max
-		rightBoostMotor.setSmartCurrentLimit(Constants.kSparkCurrentLimit);
-		rightBoostMotor.setSecondaryCurrentLimit(Constants.kSparkPeakCurrentLimit, Constants.kSparkPeakCurrentDuration);
-
-		// Set current limiting for Talon drivetrain motors
-		frontRightMotor.configContinuousCurrentLimit(Constants.kTalonCurrentLimit);
-		frontRightMotor.configPeakCurrentLimit(Constants.kTalonPeakCurrentLimit, Constants.kTalonPeakCurrentDuration);
-		frontRightMotor.enableCurrentLimit(true);
-
-		rearRightMotor.configContinuousCurrentLimit(Constants.kTalonCurrentLimit);
-		rearRightMotor.configPeakCurrentLimit(Constants.kTalonPeakCurrentLimit, Constants.kTalonPeakCurrentDuration);
-		rearRightMotor.enableCurrentLimit(true);
-
-		frontLeftMotor.configContinuousCurrentLimit(Constants.kTalonCurrentLimit);
-		frontLeftMotor.configPeakCurrentLimit(Constants.kTalonPeakCurrentLimit, Constants.kTalonPeakCurrentDuration);
-		frontLeftMotor.enableCurrentLimit(true);
-
-		rearLeftMotor.configContinuousCurrentLimit(Constants.kTalonCurrentLimit);
-		rearLeftMotor.configPeakCurrentLimit(Constants.kTalonPeakCurrentLimit, Constants.kTalonPeakCurrentDuration);
-		rearLeftMotor.enableCurrentLimit(true);
-
+		initializeEncoders();
 		currentDistanceError = 0;
 		rightDistanceError = 0;
 		leftDistanceError = 0;
@@ -100,11 +76,18 @@ public class Drivetrain {
 			
 		}
 		
+		frontRightSpark.restoreFactoryDefaults();
+		centerRightSpark.restoreFactoryDefaults();
+		rearRightSpark.restoreFactoryDefaults();
+		frontLeftSpark.restoreFactoryDefaults();
+		centerLeftSpark.restoreFactoryDefaults();
+		rearLeftSpark.restoreFactoryDefaults();
+
 		// Do we really need this?
-		frontRightMotor.setSafetyEnabled(false);
+		/*frontRightMotor.setSafetyEnabled(false);
 		frontLeftMotor.setSafetyEnabled(false);
 		rearRightMotor.setSafetyEnabled(false);
-		rearLeftMotor.setSafetyEnabled(false);
+		rearLeftMotor.setSafetyEnabled(false);*/
 		setBrakeMode(false);
 	
 		/*
@@ -118,13 +101,16 @@ public class Drivetrain {
 		 */
 		driveController = new MiniPID(Constants.kDrive_P, Constants.kDrive_I, Constants.kDrive_D);
 		driveController.setOutputLimits(-1.0, 1.0);
+
+		driveTurnController = new MiniPID(Constants.kDriveTurn_P, Constants.kDriveTurn_I, Constants.kDriveTurn_D);
+		driveTurnController.setOutputLimits(-1.0, 1.0);
 		
 		/*
 		 * This is the PID controller for the Yaw correction to keep the robot driving straight
 		 * during the driveTo() method 
 		 */
-		turnYawController = new MiniPID
-				(Constants.kDriveYaw_P, Constants.kDriveYaw_I, Constants.kDriveYaw_D);
+		// = new MiniPID
+		//		(Constants.kDriveYaw_P, Constants.kDriveYaw_I, Constants.kDriveYaw_D);
 		
 		/*
 		 * Configure the Talon SRX motor controllers
@@ -142,14 +128,19 @@ public class Drivetrain {
 		/* choose based on what direction you want forward/positive to be.
 		 * This does not affect sensor phase. */ 
 	
-		rearRightMotor.setInverted(false);
+		//rearRightMotor.setInverted(false);
+		//frontRightMotor.setInverted(false);
+		rearRightSpark.setInverted(false);
 		frontRightMotor.setInverted(false);
 
-		rearLeftMotor.follow(frontLeftMotor); 	// follow the master talon		
-		rearRightMotor.follow(frontRightMotor);
-	
-		//pdp = new PowerDistributionPanel();
+		//rearLeftMotor.follow(frontLeftMotor); 	// follow the master talon		
+		//rearRightMotor.follow(frontRightMotor);
+		centerLeftSpark.follow(frontLeftSpark, true);
+		rearLeftSpark.follow(frontLeftSpark);
+		centerRightSpark.follow(frontRightSpark, true);
+		rearRightSpark.follow(frontRightSpark);
 	}
+	
 	
 	/*
 	 * Initialize encoders - set to zero
@@ -157,24 +148,6 @@ public class Drivetrain {
 	public void initializeEncoders()	{
 		frontLeftMotor.getSensorCollection().setQuadraturePosition(0, 0);
 		frontRightMotor.getSensorCollection().setQuadraturePosition(0, 0);
-	}
-
-	public void boostForward()
-	{
-		rightBoostMotor.set(1.0);
-		leftBoostMotor.set(1.0);
-	}
-
-	public void stopBoost()
-	{
-		rightBoostMotor.set(0.0);
-		leftBoostMotor.set(0.0);
-	}
-
-	public void boostBackward()
-	{
-		rightBoostMotor.set(-1.0);
-		leftBoostMotor.set(-1.0);
 	}
 
 	/*
@@ -218,13 +191,32 @@ public class Drivetrain {
 		// Return only the left encoder until the right encoder gets fixed
 		return leftEncoderDistance * Constants.DRIVE_DIST_PER_PULSE;
 	}
+
+	// for use in turnToEncoders
+	public double getEncoderAngle()	{
+		int leftEncoderDistance;
+		int rightEncoderDistance;
+		
+		leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
+		rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
+		
+		/*
+		 * I'm getting half of the pulses that I should on the right encoder, as if 
+		 * one of the channels is not working.  I'll use the left only for now
+		 * 
+		 * Also, left is negative when going forward.
+		 */
+		
+		// Return only the left encoder until the right encoder gets fixed
+		return rightEncoderDistance / Constants.ENCODER_COUNTS_PER_ANGLE;
+	}
 	
 	public double getREncoderDistance() {
 		return frontRightMotor.getSelectedSensorPosition(0)*Constants.DRIVE_DIST_PER_PULSE;
 	}
 	
-	public double getLEncoderDistance() {
-		return -frontLeftMotor.getSelectedSensorPosition(0)*Constants.DRIVE_DIST_PER_PULSE;	// negative when forward
+	public double getLEncoderPosition() {
+		return -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
 	}
 	
 	/*
@@ -258,9 +250,11 @@ public class Drivetrain {
 		double result = 0;
 		
 		if(side == 0)	{
-			result = frontLeftMotor.getMotorOutputPercent();
+			//result = frontLeftMotor.getMotorOutputPercent();
+			result = frontLeftSpark.getAppliedOutput();
 		} else if (side == 1)	{
-			result = frontRightMotor.getMotorOutputPercent();
+			//result = frontRightMotor.getMotorOutputPercent();
+			result = frontRightSpark.getAppliedOutput();
 		}
 		
 		return result;
@@ -296,15 +290,27 @@ public class Drivetrain {
 	 */
 	public void setBrakeMode(boolean brakeon)	{
 		if (brakeon)	{
-			frontRightMotor.setNeutralMode(NeutralMode.Brake);
+			/*frontRightMotor.setNeutralMode(NeutralMode.Brake);
 			frontLeftMotor.setNeutralMode(NeutralMode.Brake); 
 			rearRightMotor.setNeutralMode(NeutralMode.Brake);
-			frontLeftMotor.setNeutralMode(NeutralMode.Brake);
+			frontLeftMotor.setNeutralMode(NeutralMode.Brake);*/
+			frontRightSpark.setIdleMode(IdleMode.kBrake);
+			frontLeftSpark.setIdleMode(IdleMode.kBrake);
+			centerRightSpark.setIdleMode(IdleMode.kBrake);
+			centerLeftSpark.setIdleMode(IdleMode.kBrake);
+			rearRightSpark.setIdleMode(IdleMode.kBrake);
+			rearLeftSpark.setIdleMode(IdleMode.kBrake);
 		}	else {
-			frontRightMotor.setNeutralMode(NeutralMode.Coast);
+			/*frontRightMotor.setNeutralMode(NeutralMode.Coast);
 			frontLeftMotor.setNeutralMode(NeutralMode.Coast);
 			rearRightMotor.setNeutralMode(NeutralMode.Coast);
-			frontLeftMotor.setNeutralMode(NeutralMode.Coast);
+			frontLeftMotor.setNeutralMode(NeutralMode.Coast);*/
+			frontRightSpark.setIdleMode(IdleMode.kCoast);
+			frontLeftSpark.setIdleMode(IdleMode.kCoast);
+			centerRightSpark.setIdleMode(IdleMode.kCoast);
+			centerLeftSpark.setIdleMode(IdleMode.kCoast);
+			rearRightSpark.setIdleMode(IdleMode.kCoast);
+			rearLeftSpark.setIdleMode(IdleMode.kCoast);
 		}
 	}
 	
@@ -358,10 +364,16 @@ public class Drivetrain {
 		
 		// Check to see if PID has succeeded, or timed out and failed
 		if (intervalTimer.hasPeriodPassed(0.5))	{
-			frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
+			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
 			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
 			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);
+			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
+			frontLeftSpark.set(0.0);
+			frontRightSpark.set(0.0);
+			centerLeftSpark.set(0.0);
+			centerRightSpark.set(0.0);
+			rearLeftSpark.set(0.0);
+			rearRightSpark.set(0.0);
 			Robot.isTurning = false;
 			intervalTimer.reset();
 			failTimer.reset();
@@ -369,10 +381,16 @@ public class Drivetrain {
 			Robot.targetTurn = false;
 			return 0;
 		} else if (failTimer.hasPeriodPassed(timeout)) {	// the PID has failed!
-			frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
+			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
 			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
 			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);
+			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
+			frontLeftSpark.set(0.0);
+			frontRightSpark.set(0.0);
+			centerLeftSpark.set(0.0);
+			centerRightSpark.set(0.0);
+			rearLeftSpark.set(0.0);
+			rearRightSpark.set(0.0);
 			Robot.isTurning = false;
 			intervalTimer.reset();
 			failTimer.reset();
@@ -381,6 +399,83 @@ public class Drivetrain {
 			return -1;
 		}
 		else	{		// the PID is not complete
+			return 1;
+		}
+	}
+
+
+	int turnToAngle(double time, double power, boolean direction){  //clockwise is true && counterclockswise is false
+		if(!Robot.isDeadReckonInitialize){
+			turnTimer.start();
+			Robot.isDeadReckonInitialize = true;
+			System.out.println("initialized!");
+		}
+		if(direction){
+			leftDrivetrain.set(power);
+			rightDrivetrain.set(-power);
+			System.out.println("Turn Clockwise!");
+		} else if (!direction){
+			leftDrivetrain.set(-power);
+			rightDrivetrain.set(power);
+			System.out.println("Turn CounterClockwise!");
+		} else {
+			leftDrivetrain.set(0.0);
+			rightDrivetrain.set(0.0);
+			System.out.println("ERROR");
+			return -1;
+		}
+
+		if(turnTimer.hasPeriodPassed(time)){
+			leftDrivetrain.set(0.0);
+			rightDrivetrain.set(0.0);
+			System.out.println("Turn Complete");
+			return 0;
+		} else {
+			return 1; //still running
+		}
+		
+	}
+
+	/**
+	 * Pid controller for turning without a gyro
+	 * Likely will not be as accurate as gyro turning
+	 * 
+	 * Positive angle = right turn
+	 */
+	int turnToEncoders(double angle)
+	{
+		if (!Robot.isTurning) 
+		{
+			initializeEncoders();	// zero the encoders
+			Robot.isTurning = true;
+		} 
+		double error = getEncoderAngle() - angle;
+		Robot.error = error;
+		double output;
+		if (error < 1 && error > -1)
+		{
+			output = 0; // 0
+		}
+		else if (error < 5 && error > -5)
+		{
+			output = 0.12; // .12
+		}
+		else if (error < 15 && error > -15)
+		{
+			output = 0.24; // .24
+		}
+		else
+		{
+			output = 0.45; // .45
+		}
+		leftDrivetrain.set(output);
+		rightDrivetrain.set(output);
+
+		if (error < 1 && error > -1)	{
+			Robot.isTurning = false;
+			rightDrivetrain.setInverted(false);
+			return 0;
+		} else	{
 			return 1;
 		}
 	}
@@ -402,7 +497,7 @@ public class Drivetrain {
 		if (!Robot.isDriving) 
 		{
 			driveController.setSetpoint(distance);
-			turnYawController.setSetpoint(imuGetYaw()); // TODO imuGetYaw()
+			//turnYawController.setSetpoint(imuGetYaw()); // TODO imuGetYaw()
 			driveController.setOutputLimits(-0.4, 0.4); //-0.8, 0.8
 			rotateToAngleRate = 0; 	// This value will be updated in the pidWrite() method
 			driveToDistanceRate = 0;
@@ -410,7 +505,7 @@ public class Drivetrain {
 			leftStickValue = rightStickValue = 0.0;
 			failTimer.start();		// the PID will fail if this timer exceeded
 			Robot.isDriving = true;
-			//System.out.println("Finish initializing");
+	//		System.out.println("Finish initializing\n\n");
 		} 
 
 		// automatically turn toward target center
@@ -418,19 +513,19 @@ public class Drivetrain {
 		// 	turnYawController.setSetpoint(angle);
 		
 		// This is the final output of the PID
-		driveToDistanceRate = driveController.getOutput(-getEncoderDistance(), distance);
-		rotateToAngleRate = turnYawController.getOutput(imuGetYaw()); 	// setpoint already loaded
+		driveToDistanceRate = driveController.getOutput(-getEncoderDistance(), distance);	// this uses the left encoder
+		//rotateToAngleRate = turnYawController.getOutput(imuGetYaw()); 	// setpoint already loaded
 		double d =  getEncoderDistance();
 		currentDistanceError = distance + d;
-		leftStickValue = -driveToDistanceRate - rotateToAngleRate;
-		rightStickValue = -driveToDistanceRate + rotateToAngleRate;
+		//leftStickValue = -driveToDistanceRate - rotateToAngleRate;
+		//rightStickValue = -driveToDistanceRate + rotateToAngleRate;
+		leftStickValue = -driveToDistanceRate;
+		rightStickValue = -driveToDistanceRate;
 		leftDrivetrain.set(-leftStickValue);
 		Robot.rightSpeed = rightStickValue;
 		rightDrivetrain.set(rightStickValue);
 		Robot.distance = d;
-		Robot.error = currentDistanceError;
-	
-		
+		//Robot.error = currentDistanceError;
 		
 		// When we get close to the target, dynamically adjust PI terms
 		if (currentDistanceError < (Constants.kToleranceDistance * 2))	{
@@ -450,28 +545,42 @@ public class Drivetrain {
 		}
 		
 		if (intervalTimer.hasPeriodPassed(1.0))	{					// Within deadband for interval time
-			frontLeftMotor.set(ControlMode.PercentOutput, 0.0);		// stop the motors
+			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);		// stop the motors
 			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
 			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);
+			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
+			frontLeftSpark.set(0.0);
+			frontRightSpark.set(0.0);
+			centerLeftSpark.set(0.0);
+			centerRightSpark.set(0.0);
+			rearLeftSpark.set(0.0);
+			rearRightSpark.set(0.0);
 			Robot.isDriving = false;
 			intervalTimer.reset();
 			failTimer.reset();
 			driveController.reset();
 			turnController.reset();
 			rightDrivetrain.setInverted(false);
+			System.out.println("Pid Finished Correctly\n\n");
 			return 0;	// PID is complete (successful)
 		} else if (failTimer.hasPeriodPassed(timeout)) 	{			// the PID has failed!
-			frontLeftMotor.set(ControlMode.PercentOutput, 0.0);		// stop the motors
+			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);		// stop the motors
 			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
 			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);
+			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
+			frontLeftSpark.set(0.0);
+			frontRightSpark.set(0.0);
+			centerLeftSpark.set(0.0);
+			centerRightSpark.set(0.0);
+			rearLeftSpark.set(0.0);
+			rearRightSpark.set(0.0);
 			Robot.isDriving = false;
 			intervalTimer.reset();
 			failTimer.reset();
 			driveController.reset();
 			turnController.reset();
 			rightDrivetrain.setInverted(false);
+			System.out.println("Pid Timout\n\n");
 			return -1;	// PID has failed (timeout)
 		} else	{		// the PID is not complete
 			return 1;

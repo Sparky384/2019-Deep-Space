@@ -50,8 +50,8 @@ public class Intake {
 			lock = true;
 		}
 		else if (!isBallPresent()){
-			bottomIntakeMotor.set(0.35);	// 0.35
-			topIntakeMotor.set(-0.40);		// -0.60
+			bottomIntakeMotor.set(0.35);
+			topIntakeMotor.set(-0.60);
 		}
 	}
 	
@@ -68,8 +68,8 @@ public class Intake {
 		counting = false;
 		lock = false;
 		ballTimer.stop();
-		bottomIntakeMotor.set(-0.6);	// -0.8
-		topIntakeMotor.set(0.6);		//	0.7
+		bottomIntakeMotor.set(-0.8);
+		topIntakeMotor.set(0.7);
 	}
 
 	public void stop()
