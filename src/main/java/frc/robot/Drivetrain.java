@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 public class Drivetrain {
 
@@ -50,6 +51,7 @@ public class Drivetrain {
 	private AHRS imu;						// the NavX board
 	private MiniPID turnController;			// drivebase turning pid controller
 	private MiniPID driveController;		// drive distance pid controller
+	private MiniPID turnYawController;              // provides steering correction for driveTo() method
 	private MiniPID driveTurnController;		// drive distance pid controller
 	//private MiniPID turnYawController;		// provides steering correction for driveTo() method
 	double rotateToAngleRate;				// PID output for turn PID			
@@ -105,6 +107,8 @@ public class Drivetrain {
 		driveTurnController = new MiniPID(Constants.kDriveTurn_P, Constants.kDriveTurn_I, Constants.kDriveTurn_D);
 		driveTurnController.setOutputLimits(-1.0, 1.0);
 		
+		turnYawController = new MiniPID (Constants.kDriveYaw_P, Constants.kDriveYaw_I, Constants.kDriveYaw_D);
+
 		/*
 		 * This is the PID controller for the Yaw correction to keep the robot driving straight
 		 * during the driveTo() method 
@@ -497,7 +501,7 @@ public class Drivetrain {
 		if (!Robot.isDriving) 
 		{
 			driveController.setSetpoint(distance);
-			//turnYawController.setSetpoint(imuGetYaw()); // TODO imuGetYaw()
+			turnYawController.setSetpoint(imuGetYaw()); // TODO imuGetYaw()
 			driveController.setOutputLimits(-0.4, 0.4); //-0.8, 0.8
 			rotateToAngleRate = 0; 	// This value will be updated in the pidWrite() method
 			driveToDistanceRate = 0;
@@ -505,7 +509,7 @@ public class Drivetrain {
 			leftStickValue = rightStickValue = 0.0;
 			failTimer.start();		// the PID will fail if this timer exceeded
 			Robot.isDriving = true;
-	//		System.out.println("Finish initializing\n\n");
+			System.out.println("Finish initializing\n\n");
 		} 
 
 		// automatically turn toward target center
@@ -514,7 +518,7 @@ public class Drivetrain {
 		
 		// This is the final output of the PID
 		driveToDistanceRate = driveController.getOutput(-getEncoderDistance(), distance);	// this uses the left encoder
-		//rotateToAngleRate = turnYawController.getOutput(imuGetYaw()); 	// setpoint already loaded
+		rotateToAngleRate = turnYawController.getOutput(imuGetYaw()); 	// setpoint already loaded
 		double d =  getEncoderDistance();
 		currentDistanceError = distance + d;
 		//leftStickValue = -driveToDistanceRate - rotateToAngleRate;
@@ -525,7 +529,7 @@ public class Drivetrain {
 		Robot.rightSpeed = rightStickValue;
 		rightDrivetrain.set(rightStickValue);
 		Robot.distance = d;
-		//Robot.error = currentDistanceError;
+		Robot.error = currentDistanceError;
 		
 		// When we get close to the target, dynamically adjust PI terms
 		if (currentDistanceError < (Constants.kToleranceDistance * 2))	{

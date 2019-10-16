@@ -26,6 +26,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -247,7 +248,7 @@ public class Robot extends IterativeRobot {
 			wrist.initializeEncoders();
 
 		// Move wrist to high position setpoint
-		if(Input.getButtonPressed(Constants.COPILOT, ButtonMap.wristHigh)){
+		if(Input.getButtonPressed(Constants.COPILOT, ButtonMap.rocketCargo)){
 			if (!wristLocks[0])		// high position wristlock
 			{
 				if(currentCamera == 2){
@@ -258,32 +259,32 @@ public class Robot extends IterativeRobot {
 				unlockWrist();	// clear any existing wristlock state
 				wristLocks[0] = true;
 			}
-			wristSetpoint = Constants.WRIST_HI;
+			wristSetpoint = Constants.ROCKET_CARGO;
 			isWristMoving = true;
 			isWristGoingFullUp = false;
 			forceDown = false;
 		}
 
 		// Move wrist to low position setpoint
-		if(Input.getButtonPressed(Constants.COPILOT, ButtonMap.wristLow)){
+		if(Input.getButtonPressed(Constants.COPILOT, ButtonMap.hatchIntake)){
 			if (!wristLocks[1])		// low position wristlock
 			{
-				if(currentCamera == 2){
-					currentCamera = 1;
+				if(currentCamera == 1){
+					currentCamera = 2;
 					cameraEntry.setString(cam2.getName());
 					System.out.println("Switch to 2");
 				}
 				unlockWrist();		// clear any existing wristlock state
 				wristLocks[1] = true;
 			}
-			wristSetpoint = Constants.WRIST_LOW;
+			wristSetpoint = Constants.HATCH_INTAKE;
 			isWristMoving = true;
 			isWristGoingFullUp = false;
 			forceDown = false;
 		}
 
 		// for the hatch
-		if(Input.getButtonPressed(Constants.COPILOT, ButtonMap.hatchDown)){
+		if(Input.getButtonPressed(Constants.COPILOT, ButtonMap.hatchScore)){
 			if (!wristLocks[2])
 			{
 				if(currentCamera == 1){
@@ -294,7 +295,7 @@ public class Robot extends IterativeRobot {
 				unlockWrist();		// clear any existing wristlock state
 				wristLocks[2] = true;
 			}
-			wristSetpoint = Constants.WRIST_HATCH;
+			wristSetpoint = Constants.HATCH_SCORE;
 			isWristMoving = true;
 			isWristGoingFullUp = false;
 			forceDown = false;
@@ -319,7 +320,7 @@ public class Robot extends IterativeRobot {
 		}
 
 		// Send wrist to bottom
-		if (Input.getButtonPressed(Constants.COPILOT, ButtonMap.wristBottom)) {
+		if (Input.getButtonPressed(Constants.COPILOT, ButtonMap.ballIntake)) {
 			if (!wristLocks[4])
 			{	
 				if(currentCamera == 1){
@@ -330,7 +331,7 @@ public class Robot extends IterativeRobot {
 				unlockWrist();		// clear any e`xisting wristlock state
 				wristLocks[4] = true;
 			}
-			wristSetpoint = Constants.WRIST_FLOOR; //Was: 253. Changed because of the new PID for the NEO motors.
+			wristSetpoint = Constants.BALL_INTAKE; //Was: 253. Changed because of the new PID for the NEO motors.
 			isWristMoving = true;
 			isWristGoingFullUp = false;
 			forceDown = false;
@@ -354,6 +355,11 @@ public class Robot extends IterativeRobot {
 		// Manual wrist control - use joystick axis
 		if (Input.getButtonHeld(Constants.COPILOT, ButtonMap.trigger)) {
 			wristSetpoint = wrist.getEncoderPosition();
+				if (!wrist.isWristTop() || (Input.getAxis(Constants.COPILOT, Constants.YAXIS) < 0)) {
+					wrist.setOutput(-Input.getAxis(Constants.COPILOT, Constants.YAXIS));
+				} else {
+					wrist.stop();
+				}				
 			wrist.setOutput(-Input.getAxis(Constants.COPILOT, Constants.YAXIS));  
 		} else {
 			if (!isWristMoving)
@@ -422,6 +428,7 @@ public class Robot extends IterativeRobot {
 			endgameTimerTicking = true;
 			endgameTimer.reset();
 			endgameTimer.start();
+			isWristMoving = false;
 		}
 
 		// keep intake down whist robot is falling
@@ -434,120 +441,6 @@ public class Robot extends IterativeRobot {
 				endgameTimer.stop();
 				endgameTimerTicking = false;
 			}
-		}
-
-		if (Input.getButtonHeld(Constants.PILOT, ButtonMap.sandstormDrive))
-		{
-			if (hasNotMoved)
-			{
-				//sandstormState = Sandstorm.Movement1;
-				sandstormState = Sandstorm.Turn1;	// for turn testing purposes
-				hasNotMoved = false;
-			}
-
-			/*if (sandstormState == Sandstorm.Movement1)
-			{
-				// drive off platform 144 inches (12 ft)
-				if (drive.driveTo(36, 10) != 1) // shortened for testing purposes
-				{
-					System.out.println("Finished Movement 1: " + sandstormState);
-					sandstormState = Sandstorm.Turn1;
-				}
-			}*/
-			if (sandstormState == Sandstorm.Turn1)
-			{
-				// turn 45 degrees toward side wall
-				//if (startingSide == "Right")
-				//{
-					//if (drive.turnToAngle(2, 0.6, true) != 1) //true is clockwise
-					if (drive.turnToEncoders(90) == 0) // should be 45, made 90 for testing pruposes
-					{
-						System.out.println("Finished Turn 1: " + sandstormState);
-						sandstormState = Sandstorm.Movement2;
-					}
-				//}
-				/*else
-				{
-					//if (drive.turnToAngle(2, 0.6, false) != 1) //true is clockwise
-					if (drive.turnToEncoders(-45) == 0)
-					{
-						System.out.println("Finished Turn 1: " + sandstormState);
-						sandstormState = Sandstorm.Movement2;
-					}
-				}*/
-			}
-			/*else if (sandstormState == Sandstorm.Movement2)
-			{
-				// drive 18.64 inches
-				if (drive.driveTo(18.64, 3) != 1)
-				{
-					System.out.println("Finished Movement 2: " + sandstormState);
-					sandstormState = Sandstorm.Turn2;
-				}
-			}
-			else if (sandstormState == Sandstorm.Turn2)
-			{
-				// turn back 45 degrees, should face opponent alliance wall again
-				if (startingSide == "Right")
-				{
-					//if (drive.turnToAngle(1, 0.5, false) != 1) //false is counterclockwise
-					if (drive.turnToEncoders(-45) == 0)
-					{
-						System.out.println("Finished Turn 2: " + sandstormState);
-						sandstormState = Sandstorm.Movement3;
-					}
-				}
-				else
-				{
-					//if (drive.turnToAngle(1, 0.5, true) != 1) //false is counterclockwise
-					if (drive.turnToEncoders(45) == 0)
-					{
-						System.out.println("Finished Turn 2: " + sandstormState);
-						sandstormState = Sandstorm.Movement3;
-					}
-				}
-			}
-			else if (sandstormState == Sandstorm.Movement3)
-			{
-				// drive 123.75 inches (10.25 ft) parallel to cargo ship
-				if (drive.driveTo(48, 10) != 1)
-				{
-					System.out.println("Finished Movement 3: " + sandstormState);
-					sandstormState = Sandstorm.FinalTurn;
-				}
-			}
-			else if (sandstormState == Sandstorm.FinalTurn)
-			{
-				if (startingSide == "Right")
-				{
-					//if (drive.turnToAngle(1, 0.5, true) != 1)
-					if (drive.turnToEncoders(-90) == 0)
-					{
-						System.out.println("Finished Final Turn: " + sandstormState);
-						sandstormState = Sandstorm.End;
-					}
-				}
-				else
-				{
-					//if (drive.turnToAngle(1, 0.5, false) != 1)
-					if (drive.turnToEncoders(90) == 0)
-					{
-						System.out.println("Finished Final Turn: " + sandstormState);
-						sandstormState = Sandstorm.End;
-					}
-				}
-			} */
-			else
-			{
-				drive.arcadeDrive(0, 0);
-			}
-		}
-
-		if (Input.getButtonReleased(Constants.PILOT, ButtonMap.sandstormDrive))
-		{
-			drive.arcadeDrive(0, 0);
-			isTurning = false;
-			hasNotMoved = true;		// allows me to test repeatedly without rebooting
 		}
 
 		// Level 2 climb

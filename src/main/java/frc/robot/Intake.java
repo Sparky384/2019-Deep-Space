@@ -51,7 +51,7 @@ public class Intake {
 		}
 		else if (!isBallPresent()){
 			bottomIntakeMotor.set(0.35);
-			topIntakeMotor.set(-0.60);
+			topIntakeMotor.set(-0.40);
 		}
 	}
 	
@@ -68,7 +68,7 @@ public class Intake {
 		counting = false;
 		lock = false;
 		ballTimer.stop();
-		bottomIntakeMotor.set(-0.8);
+		bottomIntakeMotor.set(-0.6);
 		topIntakeMotor.set(0.7);
 	}
 

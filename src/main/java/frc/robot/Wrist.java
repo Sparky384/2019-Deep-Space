@@ -30,7 +30,7 @@ public class Wrist {
 											// of the moveTo() method
 	
 	public Wrist() {
-		wristMotorEncoder = new WPI_TalonSRX(TalonPort.wristEncoder);
+		wristMotorEncoder = new WPI_TalonSRX(TalonPort.wristMotor);
 		wristMotorEncoder.setInverted(true);
 		wristMotorEncoder.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
 
@@ -90,6 +90,7 @@ public class Wrist {
 
 		// Calculate the current error
 		currentWristError = Math.abs(position - getEncoderPosition());
+		System.out.println("PID error: " + currentWristError);
 		if (currentWristError < Constants.kWristToleranceDistance) {
 			inDeadBand = true;
 		} else{
@@ -105,12 +106,12 @@ public class Wrist {
 
 		wristMotor.set(rotateToPositionRate);
 		
-		if(position > getEncoderPosition()) {	// wrist has rotated down past setpoint
+		if(position < getEncoderPosition()) {	// wrist has rotated down past setpoint
 			wristController.setP(Constants.kWrist_Pu);	// PID constants for UP motion
 			wristController.setI(Constants.kWrist_Iu);
 			wristController.setD(Constants.kWrist_Du);
 			wristController.setF(Constants.kWrist_FFu);
-		} else if (position < getEncoderPosition()) {	// wrist is not yet at setpoint
+		} else if (position > getEncoderPosition()) {	// wrist is not yet at setpoint
 			wristController.setP(Constants.kWrist_Pd);	// PID constants for DOWN motion
 			wristController.setI(Constants.kWrist_Id);
 			wristController.setD(Constants.kWrist_Dd);

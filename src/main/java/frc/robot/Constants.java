@@ -29,16 +29,22 @@ public class Constants{
 	public static final int WRIST_FLOOR = 245;
 	public static final int WRIST_LVL2 = 345;
 
+	// New positions for district champs
+	public static final int BALL_INTAKE = 269;
+    public static final int HATCH_INTAKE = 255;
+    public static final int ROCKET_CARGO = 105;
+    public static final int HATCH_SCORE = 215;
+
 	public static final int XAXIS = 0;
 	public static final int YAXIS = 1;
 	public static final int PILOT = 0;
 	public static final int COPILOT = 1;
 	
 	public static final double kDrive_P = 0.033;		// far away P gain - 0.060   From: 0.009, COMPETITION: 0.033
- 	public static final double kDrive_Pa = 0.0004;		// approach P gain - 0.08, COMPETITION: 0.002
+ 	public static final double kDrive_Pa = 0.002;		// approach P gain - 0.08, COMPETITION: 0.002
  	public static final double kDrive_I = 0.0015;		// far away I gain, COMPETITION: 0.0015
  	public static final double kDrive_Ia = 0.00015;		// approach I gain - 0.0005, COMPETITION: 0.00015
-	 public static final double kDrive_D = 0.01;			// COMPETITION: 0.0
+	 public static final double kDrive_D = 0.0;			// COMPETITION: 0.0
 	 
 	public static final double kDriveTurn_P = 0.045;		// far away P gain - 0.060   From: 0.009, COMPETITION: 0.033
  	public static final double kDriveTurn_Pa = 0.04;		// approach P gain - 0.08, COMPETITION: 0.002
@@ -52,12 +58,12 @@ public class Constants{
 	public static final double kTurn_Ia = 0.100;		//
 	public static final double kTurn_D = 0.01; 			//
 	
-	public static final double kWrist_Pu = 0.002; 		// Proportional Gain, rotating upwards [0.005] Was: 0.002
-	public static final double kWrist_Iu = 0.0;			// Integral Gain, rotating upwards [0.0005] Was: 0.1
-	public static final double kWrist_Du = 0.00025; 		// Derivative Gain, rotating upwards Was: 0
+	public static final double kWrist_Pu = 0.025; 		// Proportional Gain, rotating upwards [0.005] Was: 0.002
+	public static final double kWrist_Iu = 0.0001;			// Integral Gain, rotating upwards [0.0005] Was: 0.1
+	public static final double kWrist_Du = 0.0; 		// Derivative Gain, rotating upwards Was: 0
 	public static final double kWrist_FFu = 0.00042;		// Feed Forward Gain, rotating upwards [0.35] Was: 0
 	
-	public static final double kWrist_Pd = 0.002; 		// Proportional Gain, rotating downwards [0.005]
+	public static final double kWrist_Pd = 0.01; 		// Proportional Gain, rotating downwards [0.005]
 	public static final double kWrist_Id = 0.0;			// Integral Gain, rotating downwards
 	public static final double kWrist_Dd = 0.0; 		// Derivative Gain, rotating downwards
 	public static final double kWrist_FFd = 0.0; 		// Feed Forward Gain, rotating downwards
@@ -70,7 +76,7 @@ public class Constants{
 	public static final double kWrist_Ida = 0.0;		// Integral Gain approaching, rotating downwards
 	public static final double kWrist_FFda = 0.0; 		// Derivative Gain approaching, rotating downwards
 	
-	public static final int kWristToleranceDistance = 6; // Wrist Tolerance in encoder counts [15]
+	public static final int kWristToleranceDistance = 2; // Wrist Tolerance in encoder counts [15]
 		
 	public static final double INTAKE_P = 0.0;
 	public static final double INTAKE_I = 0.0;
@@ -93,6 +99,16 @@ public class Constants{
  	public static final double kDriveYaw_D = 0.0;
 	
 	public static final int kPIDLoopIdx = 0;
+
+    // Current limiting
+    // Spark max
+    public static final int kSparkCurrentLimit = 70;                        // steady state current limit [60]
+    public static final int kSparkPeakCurrentLimit = 100;           // peak short duration current limit [100]
+    public static final int kSparkPeakCurrentDuration = 200;        // peak short duration current time, milliseconds [200]
+    // Talon
+    public static final int kTalonCurrentLimit = 40;                        //      [40]
+    public static final int kTalonPeakCurrentLimit = 45;            //      [45]
+    public static final int kTalonPeakCurrentDuration = 100;        //      [100]
 
 	/*
 	 * set to zero to skip waiting for confirmation, set to nonzero to wait and
