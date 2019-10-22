@@ -102,13 +102,12 @@ public class Constants{
 
     // Current limiting
     // Spark max
-    public static final int kSparkCurrentLimit = 70;                        // steady state current limit [60]
+    public static final int kSparkCurrentLimit = 60;                // steady state current limit [60]
     public static final int kSparkPeakCurrentLimit = 100;           // peak short duration current limit [100]
     public static final int kSparkPeakCurrentDuration = 200;        // peak short duration current time, milliseconds [200]
-    // Talon
-    public static final int kTalonCurrentLimit = 40;                        //      [40]
-    public static final int kTalonPeakCurrentLimit = 45;            //      [45]
-    public static final int kTalonPeakCurrentDuration = 100;        //      [100]
+	
+	// Spark max ramp rate
+	public static final double kSparkRampRate = 0.100;
 
 	/*
 	 * set to zero to skip waiting for confirmation, set to nonzero to wait and

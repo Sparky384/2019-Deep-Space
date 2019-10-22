@@ -1,11 +1,11 @@
 package frc.robot;
 
-import javax.lang.model.util.ElementScanner6;
+//import javax.lang.model.util.ElementScanner6;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+//import com.ctre.phoenix.motorcontrol.ControlMode;
+//import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+//import com.ctre.phoenix.motorcontrol.NeutralMode;
+//import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -14,24 +14,20 @@ import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
+//import com.revrobotics.CANError;
 // Spark Max libraries
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import edu.wpi.first.wpilibj.PowerDistributionPanel;
+//import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 public class Drivetrain {
-
-	public WPI_TalonSRX frontRightMotor = new WPI_TalonSRX(TalonPort.rightEncoder);	// needed for encoder
-	//public WPI_TalonSRX rearRightMotor = new WPI_TalonSRX(TalonPort.rearRightMotor);
-	public WPI_TalonSRX frontLeftMotor = new WPI_TalonSRX(TalonPort.leftEncoder);		// -1.0 to run forward, needed for encoder
-	//public WPI_TalonSRX rearLeftMotor = new WPI_TalonSRX(TalonPort.rearLeftMotor);		// -1.0 to run forward
 	
 	private CANSparkMax frontRightSpark = new CANSparkMax(TalonPort.frontRightMotor, MotorType.kBrushless);
-	private CANSparkMax centerRightSpark = new CANSparkMax(TalonPort.centerRightMotor, MotorType.kBrushless);
+	//private CANSparkMax centerRightSpark = new CANSparkMax(TalonPort.centerRightMotor, MotorType.kBrushless);
 	private CANSparkMax rearRightSpark = new CANSparkMax(TalonPort.rearRightMotor, MotorType.kBrushless);
 	private CANSparkMax frontLeftSpark = new CANSparkMax(TalonPort.frontLeftMotor, MotorType.kBrushless);
-	private CANSparkMax centerLeftSpark = new CANSparkMax(TalonPort.centerLeftMotor, MotorType.kBrushless);
+	//private CANSparkMax centerLeftSpark = new CANSparkMax(TalonPort.centerLeftMotor, MotorType.kBrushless);
 	private CANSparkMax rearLeftSpark = new CANSparkMax(TalonPort.rearLeftMotor, MotorType.kBrushless);
 
 	// Need to check elapsed time for PID control
@@ -42,8 +38,8 @@ public class Drivetrain {
 	// Define the motors that are slaved as a control group
 	//private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftMotor, rearLeftMotor);
 	//private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightMotor, rearRightMotor);
-	private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftSpark, centerLeftSpark, rearLeftSpark);
-	private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightSpark, centerRightSpark, rearRightSpark);
+	private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftSpark, rearLeftSpark);
+	private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightSpark,  rearRightSpark);
 	
 	// Set up differential drive for teleop
 	private DifferentialDrive diffDrive = new DifferentialDrive(leftDrivetrain, rightDrivetrain);
@@ -79,18 +75,38 @@ public class Drivetrain {
 		}
 		
 		frontRightSpark.restoreFactoryDefaults();
-		centerRightSpark.restoreFactoryDefaults();
+		//centerRightSpark.restoreFactoryDefaults();
 		rearRightSpark.restoreFactoryDefaults();
 		frontLeftSpark.restoreFactoryDefaults();
-		centerLeftSpark.restoreFactoryDefaults();
+		//centerLeftSpark.restoreFactoryDefaults();
 		rearLeftSpark.restoreFactoryDefaults();
 
-		// Do we really need this?
-		/*frontRightMotor.setSafetyEnabled(false);
-		frontLeftMotor.setSafetyEnabled(false);
-		rearRightMotor.setSafetyEnabled(false);
-		rearLeftMotor.setSafetyEnabled(false);*/
-		setBrakeMode(false);
+		// Set current limiting for Spark Max
+		frontRightSpark.setSmartCurrentLimit(Constants.kSparkCurrentLimit);
+		frontRightSpark.setSecondaryCurrentLimit(Constants.kSparkPeakCurrentLimit, Constants.kSparkPeakCurrentDuration);
+		frontRightSpark.setIdleMode(IdleMode.kCoast);
+
+		rearRightSpark.setSmartCurrentLimit(Constants.kSparkCurrentLimit);
+		rearRightSpark.setSecondaryCurrentLimit(Constants.kSparkPeakCurrentLimit, Constants.kSparkPeakCurrentDuration);
+		rearRightSpark.setIdleMode(IdleMode.kCoast);
+
+		frontLeftSpark.setSmartCurrentLimit(Constants.kSparkCurrentLimit);
+		frontLeftSpark.setSecondaryCurrentLimit(Constants.kSparkPeakCurrentLimit, Constants.kSparkPeakCurrentDuration);
+		frontLeftSpark.setIdleMode(IdleMode.kCoast);
+
+		rearLeftSpark.setSmartCurrentLimit(Constants.kSparkCurrentLimit);
+		rearLeftSpark.setSecondaryCurrentLimit(Constants.kSparkPeakCurrentLimit, Constants.kSparkPeakCurrentDuration);
+		rearLeftSpark.setIdleMode(IdleMode.kCoast);
+
+		// Spark max ramp rate
+		frontRightSpark.setOpenLoopRampRate(Constants.kSparkRampRate);
+		rearRightSpark.setOpenLoopRampRate(Constants.kSparkRampRate);
+		frontLeftSpark.setOpenLoopRampRate(Constants.kSparkRampRate);
+		rearLeftSpark.setOpenLoopRampRate(Constants.kSparkRampRate);
+
+		//CANError com.revrobotics.CANSparkMax.setOpenLoopRampRate (5.0);
+
+		//setBrakeMode(false);
 	
 		/*
 		 * This is the PID controller for the turn
@@ -120,14 +136,14 @@ public class Drivetrain {
 		 * Configure the Talon SRX motor controllers
 		 * 
 		 */
-		frontLeftMotor.configSelectedFeedbackSensor(
-				FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
-		frontRightMotor.configSelectedFeedbackSensor(
-				FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
+		//frontLeftMotor.configSelectedFeedbackSensor(
+		//		FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
+		//frontRightMotor.configSelectedFeedbackSensor(
+		//		FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
 		
 		/* choose to ensure sensor is positive when output is positive */
-		frontLeftMotor.setSensorPhase(Constants.kLeftSensorPhase);
-		frontRightMotor.setSensorPhase(Constants.kRightSensorPhase);
+		//frontLeftMotor.setSensorPhase(Constants.kLeftSensorPhase);
+		//frontRightMotor.setSensorPhase(Constants.kRightSensorPhase);
 
 		/* choose based on what direction you want forward/positive to be.
 		 * This does not affect sensor phase. */ 
@@ -135,13 +151,13 @@ public class Drivetrain {
 		//rearRightMotor.setInverted(false);
 		//frontRightMotor.setInverted(false);
 		rearRightSpark.setInverted(false);
-		frontRightMotor.setInverted(false);
+		//frontRightMotor.setInverted(false);
 
 		//rearLeftMotor.follow(frontLeftMotor); 	// follow the master talon		
 		//rearRightMotor.follow(frontRightMotor);
-		centerLeftSpark.follow(frontLeftSpark, true);
+		//centerLeftSpark.follow(frontLeftSpark, true);
 		rearLeftSpark.follow(frontLeftSpark);
-		centerRightSpark.follow(frontRightSpark, true);
+		//centerRightSpark.follow(frontRightSpark, true);
 		rearRightSpark.follow(frontRightSpark);
 	}
 	
@@ -150,8 +166,8 @@ public class Drivetrain {
 	 * Initialize encoders - set to zero
 	 */
 	public void initializeEncoders()	{
-		frontLeftMotor.getSensorCollection().setQuadraturePosition(0, 0);
-		frontRightMotor.getSensorCollection().setQuadraturePosition(0, 0);
+		//frontLeftMotor.getSensorCollection().setQuadraturePosition(0, 0);
+		//frontRightMotor.getSensorCollection().setQuadraturePosition(0, 0);
 	}
 
 	/*
@@ -162,13 +178,7 @@ public class Drivetrain {
 	public int getEncoderPosition(int side)	{
 		int result;
 		
-		if(side == 0)	{
-			result = frontLeftMotor.getSelectedSensorPosition(0);
-		} else if (side == 1)	{
-			result = frontRightMotor.getSelectedSensorPosition(0);
-		}	else	{	// an illegal value was sent
-			result = 0;
-		}
+		result  = 0;
 		
 		return result;
 	}
@@ -179,11 +189,11 @@ public class Drivetrain {
 	 * Make sure that both encoder values are of same polarity
 	 */
 	public double getEncoderDistance()	{
-		int leftEncoderDistance;
-		int rightEncoderDistance;
+		//int leftEncoderDistance;
+		//int rightEncoderDistance;
 		
-		leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
-		rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
+		//leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
+		//rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
 		
 		/*
 		 * I'm getting half of the pulses that I should on the right encoder, as if 
@@ -193,16 +203,17 @@ public class Drivetrain {
 		 */
 		
 		// Return only the left encoder until the right encoder gets fixed
-		return leftEncoderDistance * Constants.DRIVE_DIST_PER_PULSE;
+		return 0;
+		//return leftEncoderDistance * Constants.DRIVE_DIST_PER_PULSE;
 	}
 
 	// for use in turnToEncoders
 	public double getEncoderAngle()	{
-		int leftEncoderDistance;
-		int rightEncoderDistance;
+		//int leftEncoderDistance;
+		//int rightEncoderDistance;
 		
-		leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
-		rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
+		//leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
+		//rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
 		
 		/*
 		 * I'm getting half of the pulses that I should on the right encoder, as if 
@@ -212,15 +223,18 @@ public class Drivetrain {
 		 */
 		
 		// Return only the left encoder until the right encoder gets fixed
-		return rightEncoderDistance / Constants.ENCODER_COUNTS_PER_ANGLE;
+		//return rightEncoderDistance / Constants.ENCODER_COUNTS_PER_ANGLE;
+		return 0;
 	}
 	
 	public double getREncoderDistance() {
-		return frontRightMotor.getSelectedSensorPosition(0)*Constants.DRIVE_DIST_PER_PULSE;
+		//return frontRightMotor.getSelectedSensorPosition(0)*Constants.DRIVE_DIST_PER_PULSE;
+		return 0;
 	}
 	
 	public double getLEncoderPosition() {
-		return -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
+		//return -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
+		return 0;
 	}
 	
 	/*
@@ -235,13 +249,14 @@ public class Drivetrain {
 		int result;
 		
 		if(side == 0)	{
-			result = frontLeftMotor.getSelectedSensorVelocity(0);
+			//result = frontLeftMotor.getSelectedSensorVelocity(0);
 		} else if (side == 1)	{
-			result = frontRightMotor.getSelectedSensorVelocity(0);
+			//result = frontRightMotor.getSelectedSensorVelocity(0);
 		}	else	{	// an illegal value was sent
 			result = 0;
 		}
-		
+		result = 0;
+
 		return result;
 	}
 
@@ -298,12 +313,12 @@ public class Drivetrain {
 			frontLeftMotor.setNeutralMode(NeutralMode.Brake); 
 			rearRightMotor.setNeutralMode(NeutralMode.Brake);
 			frontLeftMotor.setNeutralMode(NeutralMode.Brake);*/
-			frontRightSpark.setIdleMode(IdleMode.kBrake);
-			frontLeftSpark.setIdleMode(IdleMode.kBrake);
-			centerRightSpark.setIdleMode(IdleMode.kBrake);
-			centerLeftSpark.setIdleMode(IdleMode.kBrake);
-			rearRightSpark.setIdleMode(IdleMode.kBrake);
-			rearLeftSpark.setIdleMode(IdleMode.kBrake);
+			//frontRightSpark.setIdleMode(IdleMode.kBrake);
+			//fontLeftSpark.setIdleMode(IdleMode.kBrake);
+			//centerRightSpark.setIdleMode(IdleMode.kBrake);
+			//centerLeftSpark.setIdleMode(IdleMode.kBrake);
+			//rearRightSpark.setIdleMode(IdleMode.kBrake);
+			//rearLeftSpark.setIdleMode(IdleMode.kBrake);
 		}	else {
 			/*frontRightMotor.setNeutralMode(NeutralMode.Coast);
 			frontLeftMotor.setNeutralMode(NeutralMode.Coast);
@@ -311,8 +326,8 @@ public class Drivetrain {
 			frontLeftMotor.setNeutralMode(NeutralMode.Coast);*/
 			frontRightSpark.setIdleMode(IdleMode.kCoast);
 			frontLeftSpark.setIdleMode(IdleMode.kCoast);
-			centerRightSpark.setIdleMode(IdleMode.kCoast);
-			centerLeftSpark.setIdleMode(IdleMode.kCoast);
+			//centerRightSpark.setIdleMode(IdleMode.kCoast);
+			//centerLeftSpark.setIdleMode(IdleMode.kCoast);
 			rearRightSpark.setIdleMode(IdleMode.kCoast);
 			rearLeftSpark.setIdleMode(IdleMode.kCoast);
 		}
@@ -374,8 +389,8 @@ public class Drivetrain {
 			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			centerLeftSpark.set(0.0);
-			centerRightSpark.set(0.0);
+			//centerLeftSpark.set(0.0);
+			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isTurning = false;
@@ -391,8 +406,8 @@ public class Drivetrain {
 			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			centerLeftSpark.set(0.0);
-			centerRightSpark.set(0.0);
+			//centerLeftSpark.set(0.0);
+			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isTurning = false;
@@ -555,8 +570,8 @@ public class Drivetrain {
 			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			centerLeftSpark.set(0.0);
-			centerRightSpark.set(0.0);
+			//centerLeftSpark.set(0.0);
+			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isDriving = false;
@@ -574,8 +589,8 @@ public class Drivetrain {
 			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			centerLeftSpark.set(0.0);
-			centerRightSpark.set(0.0);
+			//centerLeftSpark.set(0.0);
+			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isDriving = false;
