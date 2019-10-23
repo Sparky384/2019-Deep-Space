@@ -1,11 +1,5 @@
 package frc.robot;
 
-//import javax.lang.model.util.ElementScanner6;
-
-//import com.ctre.phoenix.motorcontrol.ControlMode;
-//import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-//import com.ctre.phoenix.motorcontrol.NeutralMode;
-//import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -24,10 +18,8 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 public class Drivetrain {
 	
 	private CANSparkMax frontRightSpark = new CANSparkMax(TalonPort.frontRightMotor, MotorType.kBrushless);
-	//private CANSparkMax centerRightSpark = new CANSparkMax(TalonPort.centerRightMotor, MotorType.kBrushless);
 	private CANSparkMax rearRightSpark = new CANSparkMax(TalonPort.rearRightMotor, MotorType.kBrushless);
 	private CANSparkMax frontLeftSpark = new CANSparkMax(TalonPort.frontLeftMotor, MotorType.kBrushless);
-	//private CANSparkMax centerLeftSpark = new CANSparkMax(TalonPort.centerLeftMotor, MotorType.kBrushless);
 	private CANSparkMax rearLeftSpark = new CANSparkMax(TalonPort.rearLeftMotor, MotorType.kBrushless);
 
 	// Need to check elapsed time for PID control
@@ -36,8 +28,6 @@ public class Drivetrain {
 	private Timer turnTimer = new Timer(); //Used in the turnToAngle
 	private boolean timing;
 	// Define the motors that are slaved as a control group
-	//private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftMotor, rearLeftMotor);
-	//private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightMotor, rearRightMotor);
 	private SpeedControllerGroup leftDrivetrain = new SpeedControllerGroup(frontLeftSpark, rearLeftSpark);
 	private SpeedControllerGroup rightDrivetrain = new SpeedControllerGroup(frontRightSpark,  rearRightSpark);
 	
@@ -75,10 +65,8 @@ public class Drivetrain {
 		}
 		
 		frontRightSpark.restoreFactoryDefaults();
-		//centerRightSpark.restoreFactoryDefaults();
 		rearRightSpark.restoreFactoryDefaults();
 		frontLeftSpark.restoreFactoryDefaults();
-		//centerLeftSpark.restoreFactoryDefaults();
 		rearLeftSpark.restoreFactoryDefaults();
 
 		// Set current limiting for Spark Max
@@ -105,8 +93,6 @@ public class Drivetrain {
 		rearLeftSpark.setOpenLoopRampRate(Constants.kSparkRampRate);
 
 		//CANError com.revrobotics.CANSparkMax.setOpenLoopRampRate (5.0);
-
-		//setBrakeMode(false);
 	
 		/*
 		 * This is the PID controller for the turn
@@ -125,39 +111,8 @@ public class Drivetrain {
 		
 		turnYawController = new MiniPID (Constants.kDriveYaw_P, Constants.kDriveYaw_I, Constants.kDriveYaw_D);
 
-		/*
-		 * This is the PID controller for the Yaw correction to keep the robot driving straight
-		 * during the driveTo() method 
-		 */
-		// = new MiniPID
-		//		(Constants.kDriveYaw_P, Constants.kDriveYaw_I, Constants.kDriveYaw_D);
-		
-		/*
-		 * Configure the Talon SRX motor controllers
-		 * 
-		 */
-		//frontLeftMotor.configSelectedFeedbackSensor(
-		//		FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
-		//frontRightMotor.configSelectedFeedbackSensor(
-		//		FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
-		
-		/* choose to ensure sensor is positive when output is positive */
-		//frontLeftMotor.setSensorPhase(Constants.kLeftSensorPhase);
-		//frontRightMotor.setSensorPhase(Constants.kRightSensorPhase);
-
-		/* choose based on what direction you want forward/positive to be.
-		 * This does not affect sensor phase. */ 
-	
-		//rearRightMotor.setInverted(false);
-		//frontRightMotor.setInverted(false);
 		rearRightSpark.setInverted(false);
-		//frontRightMotor.setInverted(false);
-
-		//rearLeftMotor.follow(frontLeftMotor); 	// follow the master talon		
-		//rearRightMotor.follow(frontRightMotor);
-		//centerLeftSpark.follow(frontLeftSpark, true);
 		rearLeftSpark.follow(frontLeftSpark);
-		//centerRightSpark.follow(frontRightSpark, true);
 		rearRightSpark.follow(frontRightSpark);
 	}
 	
@@ -166,8 +121,6 @@ public class Drivetrain {
 	 * Initialize encoders - set to zero
 	 */
 	public void initializeEncoders()	{
-		//frontLeftMotor.getSensorCollection().setQuadraturePosition(0, 0);
-		//frontRightMotor.getSensorCollection().setQuadraturePosition(0, 0);
 	}
 
 	/*
@@ -188,52 +141,21 @@ public class Drivetrain {
 	 * This returns the distance in inches.
 	 * Make sure that both encoder values are of same polarity
 	 */
-	public double getEncoderDistance()	{
-		//int leftEncoderDistance;
-		//int rightEncoderDistance;
-		
-		//leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
-		//rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
-		
-		/*
-		 * I'm getting half of the pulses that I should on the right encoder, as if 
-		 * one of the channels is not working.  I'll use the left only for now
-		 * 
-		 * Also, left is negative when going forward.
-		 */
-		
+	public double getEncoderDistance()	{	
 		// Return only the left encoder until the right encoder gets fixed
 		return 0;
-		//return leftEncoderDistance * Constants.DRIVE_DIST_PER_PULSE;
 	}
 
 	// for use in turnToEncoders
 	public double getEncoderAngle()	{
-		//int leftEncoderDistance;
-		//int rightEncoderDistance;
-		
-		//leftEncoderDistance = -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
-		//rightEncoderDistance = frontRightMotor.getSelectedSensorPosition(0);
-		
-		/*
-		 * I'm getting half of the pulses that I should on the right encoder, as if 
-		 * one of the channels is not working.  I'll use the left only for now
-		 * 
-		 * Also, left is negative when going forward.
-		 */
-		
-		// Return only the left encoder until the right encoder gets fixed
-		//return rightEncoderDistance / Constants.ENCODER_COUNTS_PER_ANGLE;
 		return 0;
 	}
 	
 	public double getREncoderDistance() {
-		//return frontRightMotor.getSelectedSensorPosition(0)*Constants.DRIVE_DIST_PER_PULSE;
 		return 0;
 	}
 	
 	public double getLEncoderPosition() {
-		//return -frontLeftMotor.getSelectedSensorPosition(0);	// negative when forward
 		return 0;
 	}
 	
@@ -309,25 +231,11 @@ public class Drivetrain {
 	 */
 	public void setBrakeMode(boolean brakeon)	{
 		if (brakeon)	{
-			/*frontRightMotor.setNeutralMode(NeutralMode.Brake);
-			frontLeftMotor.setNeutralMode(NeutralMode.Brake); 
-			rearRightMotor.setNeutralMode(NeutralMode.Brake);
-			frontLeftMotor.setNeutralMode(NeutralMode.Brake);*/
-			//frontRightSpark.setIdleMode(IdleMode.kBrake);
-			//fontLeftSpark.setIdleMode(IdleMode.kBrake);
-			//centerRightSpark.setIdleMode(IdleMode.kBrake);
-			//centerLeftSpark.setIdleMode(IdleMode.kBrake);
-			//rearRightSpark.setIdleMode(IdleMode.kBrake);
-			//rearLeftSpark.setIdleMode(IdleMode.kBrake);
+
 		}	else {
-			/*frontRightMotor.setNeutralMode(NeutralMode.Coast);
-			frontLeftMotor.setNeutralMode(NeutralMode.Coast);
-			rearRightMotor.setNeutralMode(NeutralMode.Coast);
-			frontLeftMotor.setNeutralMode(NeutralMode.Coast);*/
+
 			frontRightSpark.setIdleMode(IdleMode.kCoast);
 			frontLeftSpark.setIdleMode(IdleMode.kCoast);
-			//centerRightSpark.setIdleMode(IdleMode.kCoast);
-			//centerLeftSpark.setIdleMode(IdleMode.kCoast);
 			rearRightSpark.setIdleMode(IdleMode.kCoast);
 			rearLeftSpark.setIdleMode(IdleMode.kCoast);
 		}
@@ -383,14 +291,8 @@ public class Drivetrain {
 		
 		// Check to see if PID has succeeded, or timed out and failed
 		if (intervalTimer.hasPeriodPassed(0.5))	{
-			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
-			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
-			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			//centerLeftSpark.set(0.0);
-			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isTurning = false;
@@ -400,14 +302,8 @@ public class Drivetrain {
 			Robot.targetTurn = false;
 			return 0;
 		} else if (failTimer.hasPeriodPassed(timeout)) {	// the PID has failed!
-			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
-			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
-			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			//centerLeftSpark.set(0.0);
-			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isTurning = false;
@@ -527,17 +423,13 @@ public class Drivetrain {
 			System.out.println("Finish initializing\n\n");
 		} 
 
-		// automatically turn toward target center
-		// if (isCameraControlling)
-		// 	turnYawController.setSetpoint(angle);
 		
 		// This is the final output of the PID
 		driveToDistanceRate = driveController.getOutput(-getEncoderDistance(), distance);	// this uses the left encoder
 		rotateToAngleRate = turnYawController.getOutput(imuGetYaw()); 	// setpoint already loaded
 		double d =  getEncoderDistance();
 		currentDistanceError = distance + d;
-		//leftStickValue = -driveToDistanceRate - rotateToAngleRate;
-		//rightStickValue = -driveToDistanceRate + rotateToAngleRate;
+
 		leftStickValue = -driveToDistanceRate;
 		rightStickValue = -driveToDistanceRate;
 		leftDrivetrain.set(-leftStickValue);
@@ -564,14 +456,9 @@ public class Drivetrain {
 		}
 		
 		if (intervalTimer.hasPeriodPassed(1.0))	{					// Within deadband for interval time
-			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);		// stop the motors
-			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
-			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
+
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			//centerLeftSpark.set(0.0);
-			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isDriving = false;
@@ -583,14 +470,8 @@ public class Drivetrain {
 			System.out.println("Pid Finished Correctly\n\n");
 			return 0;	// PID is complete (successful)
 		} else if (failTimer.hasPeriodPassed(timeout)) 	{			// the PID has failed!
-			/*frontLeftMotor.set(ControlMode.PercentOutput, 0.0);		// stop the motors
-			frontRightMotor.set(ControlMode.PercentOutput, 0.0);	// stop the motors
-			rearLeftMotor.set(ControlMode.PercentOutput, 0.0);
-			rearRightMotor.set(ControlMode.PercentOutput, 0.0);*/
 			frontLeftSpark.set(0.0);
 			frontRightSpark.set(0.0);
-			//centerLeftSpark.set(0.0);
-			//centerRightSpark.set(0.0);
 			rearLeftSpark.set(0.0);
 			rearRightSpark.set(0.0);
 			Robot.isDriving = false;
