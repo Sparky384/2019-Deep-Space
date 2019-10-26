@@ -30,9 +30,9 @@ public class Constants{
 
 	// New positions for district champs
 	public static final int BALL_INTAKE = 269;
-	public static final int HATCH_INTAKE = 255;
+	public static final int HATCH_INTAKE = 246; //Button 8 (255)
 	public static final int ROCKET_CARGO = 105;
-	public static final int HATCH_SCORE = 215;
+	public static final int HATCH_SCORE = 215;  
 
 	public static final int XAXIS = 0;
 	public static final int YAXIS = 1;
